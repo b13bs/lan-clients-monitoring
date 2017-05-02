@@ -5,6 +5,8 @@ from flask import Flask
 from flask import request
 from flask import render_template
 from flask import flash
+from flask import redirect
+from flask import url_for
 from concurrent.futures import ThreadPoolExecutor
 import psutil
 import os
@@ -22,7 +24,7 @@ def token_validation(token):
         flash("Access denied, no token supplied", "alert-danger")
         return False
     elif not token_management.token_is_good_format(token):
-        flash("Acces denied, bad token format", "alert-danger")
+        flash("Access denied, bad token format", "alert-danger")
         return False
     else:
         token_status = token_management.token_check(token)
@@ -33,13 +35,14 @@ def token_validation(token):
             flash("Bad token", "alert-danger")
             return False
         elif token_status == "valid":
-            flash("Access granted", "alert-success")
+            #flash("Access granted", "alert-success")
             return True
 
 
-@app.route("/status")
+@app.route("/")
 def status_page():
-    return_value = token_validation(request.args.get('token'))
+    token = request.args.get('token')
+    return_value = token_validation(token)
 
     if return_value:
         pid = scans_utilities.get_process_pid(process["name"])
@@ -48,18 +51,21 @@ def status_page():
             flash("Scan is sleeping. SHHH, don't wake him up!!", "alert-warning")
         else:
             flash("A scan is currently running", "alert-success")
+        return render_template("page.html", token=token)
 
     return render_template("page.html")
 
 
 @app.route("/snooze")
 def snooze_page():
-    return_value = token_validation(request.args.get('token'))
+    token = request.args.get('token')
+    return_value = token_validation(token)
+    app.logger.debug("Snoozing! token=%s" % token)
     if return_value:
         executor.submit(scans_utilities.pause_scan, process)
-        flash("Snoozed", "alert-success")
+        flash("Snoozed", "alert-info")
 
-    return render_template("page.html")
+    return redirect(url_for("status_page", token=token))
 
 
 if __name__ == "__main__":

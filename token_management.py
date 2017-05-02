@@ -1,6 +1,7 @@
 import random
 import string
 import datetime
+import subprocess
 import re
 import os
 
@@ -12,7 +13,7 @@ def get_current_time():
     return datetime.datetime.now()
 
 
-def generate_random_token():
+def generate_random_string():
     return ''.join(random.choice(string.ascii_letters + string.digits) for i in range(8))
 
 
@@ -22,8 +23,15 @@ def write_token(token):
         f.write("%s|%s\n" % (now.strftime("%Y-%m-%d-%H-%M-%S"), token))
 
 
-def create_auto_token():
-    token = generate_random_token()
+def get_valid_token():
+    # Most efficient way of getting last line
+    last_line = subprocess.check_output(['tail', '-1', db_filename]).decode()
+    if "|" in last_line:
+        last_token_created = last_line.split("|")[1].strip()
+        if token_check(last_token_created) == "valid":
+            return last_token_created
+
+    token = generate_random_string()
     write_token(token)
     return token
 
@@ -49,3 +57,4 @@ def token_check(token):
                 else:
                     return "valid"
         return "invalid"
+

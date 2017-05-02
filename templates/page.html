@@ -10,4 +10,8 @@
             </div>
         {% endif %}
     {% endwith %}
+
+    {% if token %}
+        <a class="btn btn-info" href="{{ url_for("snooze_page", token=token) }}" role="button">Snooze</a>
+    {% endif %}
 {% endblock %}
