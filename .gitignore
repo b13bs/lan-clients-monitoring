@@ -90,4 +90,4 @@ ENV/
 
 # My stuff
 tokens.txt
-secrets.py
+config.py
