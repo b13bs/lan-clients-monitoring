@@ -10,3 +10,4 @@ TODO
 * create a Jinja file with buttons created dynamically with token values
 * abuse of config.py file
 * create token file if does not exist (first run)
+* redesign token usage: instead of get parameter, use them as dynamic path that with expiration
