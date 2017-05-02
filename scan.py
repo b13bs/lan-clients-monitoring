@@ -41,7 +41,7 @@ if __name__ == "__main__":
                     token = token_management.get_valid_token()
                     message = "%s (%s) - http://%s:5000/snooze?token=%s" % (ip, mac, config.server_address, token)
                     logger.info("Client detected! %s | %s - token=%s" % (ip, mac, token))
-                    #notify_me(message)
+                    notify_me(message)
         else:
             logger.debug("all good")
         time.sleep(10)
