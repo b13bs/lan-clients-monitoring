@@ -75,6 +75,8 @@ if __name__ == "__main__":
 
     pid = scans_utilities.get_process_pid(process["name"])
 
+    token_management.check_token_file_existence()
+
     app.logger.debug("Scan started. PID=%s" % pid)
     app.config['DEBUG'] = True
     app.run(host="0.0.0.0") 

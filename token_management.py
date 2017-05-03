@@ -58,3 +58,10 @@ def token_check(token):
                     return "valid"
         return "invalid"
 
+
+def check_token_file_existence():
+    if not os.path.exists(db_filename):
+        open(db_filename, 'w').close()
+
+
+
