@@ -91,3 +91,5 @@ ENV/
 # My stuff
 tokens.txt
 config.py
+
+.idea/
