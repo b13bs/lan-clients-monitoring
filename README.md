@@ -2,6 +2,7 @@
 Periodally scan a network subnet to detect potentially unknown clients and notify admin
 
 TODO
+* change project name to: LAN clients monitoring
 * write README file
   * dependencies: python modules, linux packages, host permissions
     * arp-scan
