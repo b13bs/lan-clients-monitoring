@@ -1,0 +1,5 @@
+pushbullet_token = "23fd9q23hksg98"
+ip_range_first = "192.168.1.100"
+ip_range_last = "192.168.1.254"
+server_address = "192.168.1.110"
+flask_secret_key = "sdg34i23498gsl"
