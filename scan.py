@@ -6,6 +6,7 @@ import logging
 import token_management
 import config
 import os
+from datetime import datetime
 from pushbullet import Pushbullet
 
 
@@ -28,23 +29,23 @@ def notify_me(body):
 if __name__ == "__main__":
     init_logging()
     logger = logging.getLogger("scan")
-
     while True:
-        output = subprocess.check_output(["arp-scan", "-I", "wlan0", "-q", "%s-%s" % (config.ip_range_first, config.ip_range_last)])
+        output = subprocess.check_output(["/usr/bin/arp-scan", "-q", "%s-%s" % (config.ip_range_first, config.ip_range_last)])
         lines = output.decode().split("\n")
         entries = lines[2:-3]
+        #print("entry: %s - %s" % (str(datetime.now()), entries))
 
         if any(entries):
-            for entry in entries:
+            for entry in list(set(entries)):
                 if entry:
                     ip, mac = entry.split()
                     token = token_management.get_valid_token()
                     message = "%s (%s) - http://%s:5000/snooze?token=%s" % (ip, mac, config.server_address, token)
                     logger.info("Client detected! %s | %s - token=%s" % (ip, mac, token))
-                    notify_me(message)
+                    #notify_me(message)
         else:
             logger.debug("all good")
-        time.sleep(10)
+        time.sleep(30)
 
 
 

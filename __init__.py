@@ -17,6 +17,7 @@ import config
 app = Flask(__name__)
 app.secret_key = config.flask_secret_key
 process = {"name": "scan.py", "path": os.path.dirname(os.path.realpath(__file__))}
+print("Imported __INIT__.PY")
 
 
 def token_validation(token):
@@ -46,6 +47,8 @@ def status_page():
 
     if return_value:
         pid = scans_utilities.get_process_pid(process["name"])
+        if not pid:
+            pid = scans_utilities.get_process_pid("%s/%s" % (process["path"], process["name"]))
         p = psutil.Process(pid)
         if p.status() == "stopped":
             flash("Scan is sleeping. SHHH, don't wake him up!!", "alert-warning")
@@ -58,11 +61,18 @@ def status_page():
 
 @app.route("/snooze")
 def snooze_page():
+    # token param
     token = request.args.get('token')
     return_value = token_validation(token)
+    
+    # duration param
+    duration = request.args.get('duration')
+    if duration is None:
+        duration = "3600"
+
     app.logger.debug("Snoozing! token=%s" % token)
     if return_value:
-        executor.submit(scans_utilities.pause_scan, process)
+        executor.submit(scans_utilities.pause_scan, process, duration)
         flash("Snoozed", "alert-info")
 
     return redirect(url_for("status_page", token=token))
@@ -78,5 +88,5 @@ if __name__ == "__main__":
     token_management.check_token_file_existence()
 
     app.logger.debug("Scan started. PID=%s" % pid)
-    app.config['DEBUG'] = True
-    app.run(host="0.0.0.0") 
+    app.config['DEBUG'] = False
+    app.run(host="0.0.0.0", use_reloader=False)

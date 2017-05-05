@@ -22,12 +22,15 @@ def killall_scans(process):
 
 def start_scan(process):
     killall_scans(process)
-    subprocess.Popen(["%s/%s" % (process["path"], process["name"])])
+    subprocess.Popen(["python3", "%s/%s" % (process["path"], process["name"])])
 
 
 # https://unix.stackexchange.com/questions/2107/how-to-suspend-and-resume-processes
-def pause_scan(process):
+def pause_scan(process, duration):
     pid = get_process_pid(process["name"])
+    if not pid:
+        pid = scans_utilities.get_process_pid("%s/%s" % (process["path"], process["name"]))
+
     os.kill(pid, signal.SIGTSTP)
-    time.sleep(60)
+    time.sleep(int(duration))
     os.kill(pid, signal.SIGCONT)

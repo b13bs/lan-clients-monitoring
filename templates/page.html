@@ -12,6 +12,8 @@
     {% endwith %}
 
     {% if token %}
-        <a class="btn btn-info" href="{{ url_for("snooze_page", token=token) }}" role="button">Snooze</a>
+        <a class="btn btn-info" href="{{ url_for("snooze_page", token=token) }}" role="button">Snooze (1h)</a>
+        <a class="btn btn-info" href="{{ url_for("snooze_page", token=token, duration=7200) }}" role="button">Snooze (2h)</a>
+        <a class="btn btn-info" href="{{ url_for("snooze_page", token=token, duration=14400) }}" role="button">Snooze (4h)</a>
     {% endif %}
 {% endblock %}
