@@ -9,12 +9,25 @@ from flask import redirect
 from flask import url_for
 from concurrent.futures import ThreadPoolExecutor
 import psutil
+import os
+import stat
 import token_management
 import process_utilities
 import config
 
 app = Flask(__name__)
 app.secret_key = config.flask_secret_key
+
+
+def files_initialization():
+    # token file
+    token_management.check_token_file_existence()
+
+    # process file
+    process_file = os.path.join(config.process_path, config.process_name)
+    st = os.stat(process_file)
+    os.chmod(process_file, st.st_mode | stat.S_IEXEC)
+    #os.chmod(process_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def token_validation(token):
@@ -99,7 +112,6 @@ if __name__ == "__main__":
     executor = ThreadPoolExecutor(5)
     process_pid = process_utilities.start_process()
 
-    token_management.check_token_file_existence()
 
     app.logger.debug("Scan started. PID=%s" % process_pid)
     app.config['DEBUG'] = False
