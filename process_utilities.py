@@ -6,7 +6,7 @@ import config
 
 
 def start_process():
-    pipe = subprocess.Popen([os.path.join(config.process_path, config.process_name)])
+    pipe = subprocess.Popen([config.process_interpreter, os.path.join(config.process_path, config.process_name)])
     return pipe.pid
 
 
@@ -19,4 +19,3 @@ def pause_process(pid, duration):
     os.kill(pid, signal.SIGTSTP)
     time.sleep(int(duration))
     resume_process(pid)
-
