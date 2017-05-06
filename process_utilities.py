@@ -6,7 +6,7 @@ import config
 
 
 def start_process():
-    pipe = subprocess.Popen(["%s/%s" % (config.process_path, config.process_name)])
+    pipe = subprocess.Popen([os.path.join(config.process_path, config.process_name)])
     return pipe.pid
 
 
