@@ -21,8 +21,9 @@ def init_logging():
 
 
 def notify_me(body):
-    pb = Pushbullet(config.pushbullet_token)
-    pb.push_note("Wireless intruder alert!", body)
+    if not config.dry_run:
+        pb = Pushbullet(config.pushbullet_token)
+        pb.push_note("Intruder alert!", body)
 
 
 if __name__ == "__main__":
