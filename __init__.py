@@ -9,15 +9,12 @@ from flask import redirect
 from flask import url_for
 from concurrent.futures import ThreadPoolExecutor
 import psutil
-import os
 import token_management
-import scans_utilities
+import process_utilities
 import config
 
 app = Flask(__name__)
 app.secret_key = config.flask_secret_key
-process = {"name": "scan.py", "path": os.path.dirname(os.path.realpath(__file__))}
-print("Imported __INIT__.PY")
 
 
 def token_validation(token):
@@ -46,47 +43,64 @@ def status_page():
     return_value = token_validation(token)
 
     if return_value:
-        pid = scans_utilities.get_process_pid(process["name"])
-        if not pid:
-            pid = scans_utilities.get_process_pid("%s/%s" % (process["path"], process["name"]))
-        p = psutil.Process(pid)
+        p = psutil.Process(process_pid)
         if p.status() == "stopped":
             flash("Scan is sleeping. SHHH, don't wake him up!!", "alert-warning")
         else:
-            flash("A scan is currently running", "alert-success")
+            flash("Scan is currently running", "alert-info")
         return render_template("page.html", token=token)
 
     return render_template("page.html")
 
 
 @app.route("/snooze")
-def snooze_page():
-    # token param
+def snooze():
+    # token parameter
     token = request.args.get('token')
-    return_value = token_validation(token)
-    
-    # duration param
+    token_is_valid = token_validation(token)
+
+    # duration parameter
     duration = request.args.get('duration')
     if duration is None:
         duration = "3600"
 
-    app.logger.debug("Snoozing! token=%s" % token)
-    if return_value:
-        executor.submit(scans_utilities.pause_scan, process, duration)
+    app.logger.debug("Snoozing!")
+    if token_is_valid:
+        try:
+            future
+        except NameError:
+            pass
+        else:
+            if future.running():
+                value = future.cancel()
+
+        global future
+        future = executor.submit(process_utilities.pause_process, process_pid, duration)
         flash("Snoozed", "alert-info")
+
+    return redirect(url_for("status_page", token=token))
+
+
+@app.route("/unsnooze")
+def unsnooze():
+    # token parameter
+    token = request.args.get('token')
+    token_is_valid = token_validation(token)
+
+    if token_is_valid:
+        app.logger.debug("Unsnoozing!")
+        process_utilities.resume_process(process_pid)
 
     return redirect(url_for("status_page", token=token))
 
 
 if __name__ == "__main__":
     # http://stackoverflow.com/questions/22615475/flask-application-with-background-threads
-    executor = ThreadPoolExecutor(2)
-    executor.submit(scans_utilities.start_scan, process)
-
-    pid = scans_utilities.get_process_pid(process["name"])
+    executor = ThreadPoolExecutor(5)
+    process_pid = process_utilities.start_process()
 
     token_management.check_token_file_existence()
 
-    app.logger.debug("Scan started. PID=%s" % pid)
+    app.logger.debug("Scan started. PID=%s" % process_pid)
     app.config['DEBUG'] = False
     app.run(host="0.0.0.0", use_reloader=False)
