@@ -2,11 +2,10 @@ import os
 import subprocess
 import time
 import signal
-import config
 
 
-def start_process():
-    pipe = subprocess.Popen([config.process_interpreter, os.path.join(config.process_path, config.process_name)])
+def start_process(path, name, interpreter):
+    pipe = subprocess.Popen([interpreter, os.path.join(path, name)])
     return pipe.pid
 
 

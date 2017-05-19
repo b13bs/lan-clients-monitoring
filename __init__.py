@@ -10,13 +10,11 @@ from flask import url_for
 from concurrent.futures import ThreadPoolExecutor
 import psutil
 import os
-import stat
+import re
 import token_management
 import process_utilities
-import config
 
 app = Flask(__name__)
-app.secret_key = config.flask_secret_key
 
 
 def token_validation(token):
@@ -36,6 +34,20 @@ def token_validation(token):
             return False
         elif token_status == "valid":
             return True
+
+
+def transform_time(duration):
+    r = re.search("^([0-9]+)([s|m|h])$", duration)
+    if not r:
+        return 3600
+
+    number, unit = r.groups()
+    if unit == "s":
+        return int(number)
+    elif unit == "m":
+        return int(number)*60
+    elif unit == "h":
+        return int(number)*60*60
 
 
 @app.route("/")
@@ -65,6 +77,8 @@ def snooze():
     if duration is None:
         duration = "3600"
 
+    nb_seconds = transform_time(duration)
+
     app.logger.debug("Snoozing!")
     if token_is_valid:
         try:
@@ -76,8 +90,8 @@ def snooze():
                 value = future.cancel()
 
         global future
-        future = executor.submit(process_utilities.pause_process, process_pid, duration)
-        flash("Snoozed", "alert-info")
+        future = executor.submit(process_utilities.pause_process, process_pid, nb_seconds)
+        flash("Snoozed for %s seconds" % nb_seconds, "alert-info")
 
     return redirect(url_for("status_page", token=token))
 
@@ -95,10 +109,27 @@ def unsnooze():
     return redirect(url_for("status_page", token=token))
 
 
+def init_config():
+    app.config.from_pyfile("config.py")
+    app.config.update(
+        DEBUG=True,
+        SECRET_KEY="fdkshfjdsfhj",
+        PROCESS_PATH=os.path.dirname(os.path.realpath(__file__)),
+        LOGGER_NAME="lan_clients_monitor"
+    )
+
+
 if __name__ == "__main__":
+    print(__name__)
+    init_config()
+
     # http://stackoverflow.com/questions/22615475/flask-application-with-background-threads
     executor = ThreadPoolExecutor(5)
-    process_pid = process_utilities.start_process()
+
+    path = app.config["PROCESS_PATH"]
+    name = app.config["PROCESS_NAME"]
+    interpreter = app.config["PROCESS_INTERPRETER"]
+    process_pid = process_utilities.start_process(path=path, name=name, interpreter=interpreter)
 
     token_management.check_token_file_existence()
 
