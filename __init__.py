@@ -56,6 +56,7 @@ def status_page():
     return_value = token_validation(token)
 
     if return_value:
+        process_pid = app.config["process_pid"]
         p = psutil.Process(process_pid)
         if p.status() == "stopped":
             flash("Scan is sleeping. SHHH, don't wake him up!!", "alert-warning")
@@ -79,7 +80,7 @@ def snooze():
 
     nb_seconds = transform_time(duration)
 
-    app.logger.debug("Snoozing!")
+    app.logger.debug("Snoozing for %s seconds!" % nb_seconds)
     if token_is_valid:
         try:
             future
@@ -90,6 +91,8 @@ def snooze():
                 value = future.cancel()
 
         global future
+        process_pid = app.config["process_pid"]
+        executor = app.config["executor"]
         future = executor.submit(process_utilities.pause_process, process_pid, nb_seconds)
         flash("Snoozed for %s seconds" % nb_seconds, "alert-info")
 
@@ -104,6 +107,7 @@ def unsnooze():
 
     if token_is_valid:
         app.logger.debug("Unsnoozing!")
+        process_pid = app.config["process_pid"]
         process_utilities.resume_process(process_pid)
 
     return redirect(url_for("status_page", token=token))
@@ -120,16 +124,20 @@ def init_config():
 
 
 if __name__ == "__main__":
-    print(__name__)
     init_config()
 
     # http://stackoverflow.com/questions/22615475/flask-application-with-background-threads
     executor = ThreadPoolExecutor(5)
+    app.config["executor"] = executor
 
     path = app.config["PROCESS_PATH"]
     name = app.config["PROCESS_NAME"]
     interpreter = app.config["PROCESS_INTERPRETER"]
+
+    process_utilities.killall_processes(path, name, interpreter)
+
     process_pid = process_utilities.start_process(path=path, name=name, interpreter=interpreter)
+    app.config["process_pid"] = process_pid
 
     token_management.check_token_file_existence()
 
